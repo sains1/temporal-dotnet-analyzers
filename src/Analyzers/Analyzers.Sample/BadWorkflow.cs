@@ -7,7 +7,7 @@ using Temporalio.Workflows;
 namespace Analyzers.Sample;
 
 [Workflow]
-public class SampleWorkflow
+public class BadWorkflow
 {
     [WorkflowRun]
     public async Task<string> RunAsync(string name)
@@ -18,6 +18,11 @@ public class SampleWorkflow
         await Task.Delay(100);
 
         Thread.Sleep(1000);
+
+        _ = DateTimeOffset.Now;
+        _ = DateTimeOffset.UtcNow;
+        _ = DateTime.Now;
+        _ = DateTime.UtcNow;
 
         return result;
     }
