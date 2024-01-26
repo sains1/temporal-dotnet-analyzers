@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Analyzers;
+namespace Analyzers.DiagnosticAnalyzers;
 
 /// <summary>
 /// An analyzer that reports any usage of .NET Timers in workflows
@@ -27,13 +27,6 @@ public class WorkflowTimerAnalyzer : DiagnosticAnalyzer
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Rule);
 
-
-    public static class Constants
-    {
-        public const string TemporalWorkflowAttribute = "Temporalio.Workflows.WorkflowAttribute";
-        public const string TemporalWorkflowRunAttribute = "Temporalio.Workflows.WorkflowRunAttribute";
-    }
-
     public override void Initialize(AnalysisContext context)
     {
         // avoid analyzing generated code.
@@ -50,13 +43,15 @@ public class WorkflowTimerAnalyzer : DiagnosticAnalyzer
             return;
 
         // filter out classes not decorated with [Workflow]
-        if (!HasWorkflowAttribute(classDeclarationNode, context.SemanticModel))
+        if (!DeclarationSyntaxFilters.HasAttribute(classDeclarationNode, context.SemanticModel,
+                TemporalConstants.WorkflowAttribute))
             return;
 
         // find all of the methods on the class with [WorkflowRun]
         var runMethods = classDeclarationNode
             .DescendantNodes().OfType<MethodDeclarationSyntax>()
-            .Where(x => HasWorkflowRunAttribute(x, context.SemanticModel));
+            .Where(x => DeclarationSyntaxFilters.HasAttribute(x, context.SemanticModel,
+                TemporalConstants.WorkflowRunAttribute));
 
         // find any usages of Task.Delay in the run methods
         var finder = new TimeDelayUsageFinder(context.SemanticModel);
@@ -69,26 +64,6 @@ public class WorkflowTimerAnalyzer : DiagnosticAnalyzer
                 context.ReportDiagnostic(diagnostic);
             }
         }
-    }
-
-    private static bool HasWorkflowAttribute(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel)
-    {
-        var attributeSyntax = classDeclaration.AttributeLists
-            .SelectMany(list => list.Attributes)
-            .FirstOrDefault(attribute =>
-                semanticModel.GetTypeInfo(attribute).Type?.ToDisplayString() == Constants.TemporalWorkflowAttribute);
-
-        return attributeSyntax != null;
-    }
-
-    private static bool HasWorkflowRunAttribute(MethodDeclarationSyntax methodDeclaration, SemanticModel semanticModel)
-    {
-        var attributeSyntax = methodDeclaration.AttributeLists
-            .SelectMany(list => list.Attributes)
-            .FirstOrDefault(attribute =>
-                semanticModel.GetTypeInfo(attribute).Type?.ToDisplayString() == Constants.TemporalWorkflowRunAttribute);
-
-        return attributeSyntax != null;
     }
 
     private class TimeDelayUsageFinder : CSharpSyntaxWalker
