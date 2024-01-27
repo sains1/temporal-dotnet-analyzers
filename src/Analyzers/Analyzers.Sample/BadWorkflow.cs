@@ -24,6 +24,8 @@ public class BadWorkflow
         _ = DateTime.Now;
         _ = DateTime.UtcNow;
 
+        _ = Guid.NewGuid();
+
         return result;
     }
 }
