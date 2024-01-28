@@ -3,6 +3,9 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Analyzers.DiagnosticAnalyzers.WorkflowQueryAnalyzers;
+using Analyzers.DiagnosticAnalyzers.WorkflowRunAnalyzers;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -20,12 +23,17 @@ public class RootAnalyzer : DiagnosticAnalyzer
     private static readonly GuidAnalyzer GuidAnalyzer = new();
     private static readonly SystemClockAnalyzer SystemClockAnalyzer = new();
     private static readonly WorkflowTimerAnalyzer WorkflowTimerAnalyzer = new();
+    private static readonly WorkflowQueryReturnTypeAnalyzer WorkflowQueryReturnTypeAnalyzer = new();
 
-    private readonly List<ITemporalRunAnalyzer> _analyzers =
+    private readonly List<ITemporalRunAnalyzer> _workflowRunAnalyzers =
         [GuidAnalyzer, SystemClockAnalyzer, WorkflowTimerAnalyzer];
+    
+    private readonly List<ITemporalRunAnalyzer> _workflowQueryAnalyzers =
+        [WorkflowQueryReturnTypeAnalyzer];
 
     private ImmutableArray<DiagnosticDescriptor> Diagnostics =>
-        _analyzers.Select(x => x.DiagnosticDescriptor).ToImmutableArray();
+        _workflowRunAnalyzers.Select(x => x.DiagnosticDescriptor)
+            .Concat(_workflowQueryAnalyzers.Select(x => x.DiagnosticDescriptor)).ToImmutableArray();
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => Diagnostics;
 
@@ -53,10 +61,23 @@ public class RootAnalyzer : DiagnosticAnalyzer
         var runMethods = classDeclarationNode
             .DescendantNodes().OfType<MethodDeclarationSyntax>()
             .Where(x => HasAttribute(x, context.SemanticModel, TemporalConstants.WorkflowRunAttribute));
+        
+        // find all of the methods on the class with WorkflowQueryAttribute
+        var queryMethods = classDeclarationNode
+            .DescendantNodes().OfType<MethodDeclarationSyntax>()
+            .Where(x => HasAttribute(x, context.SemanticModel, TemporalConstants.WorkflowQueryAttribute));
 
         foreach (var method in runMethods)
         {
-            Parallel.ForEach(_analyzers, analyzer =>
+            Parallel.ForEach(_workflowRunAnalyzers, analyzer =>
+            {
+                analyzer.AnalyzeWorkflowRunMethod(context, method);
+            });
+        }
+        
+        foreach (var method in queryMethods)
+        {
+            Parallel.ForEach(_workflowQueryAnalyzers, analyzer =>
             {
                 analyzer.AnalyzeWorkflowRunMethod(context, method);
             });

@@ -28,6 +28,23 @@ public class BadWorkflow
 
         return result;
     }
+    
+    [WorkflowQuery]
+    public void QueryVoid()
+    {
+    }
+    
+    [WorkflowQuery]
+    public Task QueryTask()
+    {
+        return Task.CompletedTask;
+    }
+
+    [WorkflowQuery]
+    public Task<string> QueryTaskT()
+    {
+        return Task.FromResult("hello");
+    }
 }
 
 public class SampleActivities

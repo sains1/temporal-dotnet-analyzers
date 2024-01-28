@@ -41,6 +41,15 @@
       <Compile Update="Sources\TMPRL0002_DateTimeUtcNowWorkflow.cs">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Compile>
+      <Compile Update="Sources\TMPRL0004_VoidReturnQuery.cs">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Compile>
+      <Compile Update="Sources\TMPRL0004_TaskReturnQuery.cs">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Compile>
+      <Compile Update="Sources\TMPRL0004_TaskTReturnQuery.cs">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>
