@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -53,13 +54,12 @@ public class RootAnalyzer : DiagnosticAnalyzer
             .DescendantNodes().OfType<MethodDeclarationSyntax>()
             .Where(x => HasAttribute(x, context.SemanticModel, TemporalConstants.WorkflowRunAttribute));
 
-        // TODO can we execute concurrently?
         foreach (var method in runMethods)
         {
-            foreach (var analyzer in _analyzers)
+            Parallel.ForEach(_analyzers, analyzer =>
             {
                 analyzer.AnalyzeWorkflowRunMethod(context, method);
-            }
+            });
         }
     }
 
