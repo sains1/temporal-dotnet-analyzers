@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Analyzers.SyntaxWalkers;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -13,8 +15,9 @@ namespace Analyzers.DiagnosticAnalyzers;
 /// An analyzer that reports any usage of .NET Timers in workflows
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class WorkflowTimerAnalyzer : DiagnosticAnalyzer
+public class WorkflowTimerAnalyzer : BaseAnalyzer
 {
+    #region diagnostic constants
     public const string DiagnosticId = "TMPRL0001";
     private const string Category = "Non-Determinism";
 
@@ -26,80 +29,21 @@ public class WorkflowTimerAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Rule);
+    # endregion
 
-    public override void Initialize(AnalysisContext context)
+    private static readonly InvocationExpressionUsageFinder Finder = new(new Dictionary<string, string>
     {
-        // avoid analyzing generated code.
-        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        [nameof(Task.Delay)] = nameof(Task),
+        [nameof(Thread.Sleep)] = nameof(Thread)
+    });
 
-        context.EnableConcurrentExecution();
-
-        context.RegisterSyntaxNodeAction(AnalyzeSyntax, SyntaxKind.ClassDeclaration);
-    }
-
-    private void AnalyzeSyntax(SyntaxNodeAnalysisContext context)
+    protected override void AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
     {
-        if (context.Node is not ClassDeclarationSyntax classDeclarationNode)
-            return;
-
-        // filter out classes not decorated with [Workflow]
-        if (!DeclarationSyntaxFilters.HasAttribute(classDeclarationNode, context.SemanticModel,
-                TemporalConstants.WorkflowAttribute))
-            return;
-
-        // find all of the methods on the class with [WorkflowRun]
-        var runMethods = classDeclarationNode
-            .DescendantNodes().OfType<MethodDeclarationSyntax>()
-            .Where(x => DeclarationSyntaxFilters.HasAttribute(x, context.SemanticModel,
-                TemporalConstants.WorkflowRunAttribute));
-
-        // find any usages of Task.Delay in the run methods
-        var finder = new TimeDelayUsageFinder(context.SemanticModel);
-        foreach (var method in runMethods)
+        var usages = Finder.FindUsages(method);
+        foreach (var usage in usages)
         {
-            var usages = finder.FindUsages(method);
-            foreach (var usage in usages)
-            {
-                var diagnostic = Diagnostic.Create(Rule, usage.GetLocation(), usage.ToString());
-                context.ReportDiagnostic(diagnostic);
-            }
-        }
-    }
-
-    private class TimeDelayUsageFinder : CSharpSyntaxWalker
-    {
-        public TimeDelayUsageFinder(SemanticModel semanticModel)
-        {
-            _semanticModel = semanticModel;
-        }
-
-        private readonly List<InvocationExpressionSyntax> _delayUsages = new();
-        private readonly SemanticModel _semanticModel;
-
-        public IReadOnlyList<InvocationExpressionSyntax> FindUsages(MethodDeclarationSyntax methodDeclaration)
-        {
-            _delayUsages.Clear();
-            Visit(methodDeclaration);
-            return _delayUsages;
-        }
-
-        public override void VisitInvocationExpression(InvocationExpressionSyntax node)
-        {
-            // Check if the invocation is Task.Delay
-            if (node.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "Delay" } delayMa &&
-                _semanticModel.GetSymbolInfo(delayMa).Symbol?.ContainingType?.Name == "Task")
-            {
-                _delayUsages.Add(node);
-            }
-
-            // Check if the invocation is Thread.Sleep
-            if (node.Expression is MemberAccessExpressionSyntax { Name.Identifier.Text: "Sleep" } sleepMa &&
-                _semanticModel.GetSymbolInfo(sleepMa).Symbol?.ContainingType?.Name == "Thread")
-            {
-                _delayUsages.Add(node);
-            }
-
-            base.VisitInvocationExpression(node);
+            var diagnostic = Diagnostic.Create(Rule, usage.GetLocation(), usage.ToString());
+            context.ReportDiagnostic(diagnostic);
         }
     }
 }

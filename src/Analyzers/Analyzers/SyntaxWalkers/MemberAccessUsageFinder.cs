@@ -9,18 +9,12 @@ namespace Analyzers.SyntaxWalkers;
 internal class MemberAccessUsageFinder(List<(string containingType, string memberIdentifier)> memberIdentifiers)
     : CSharpSyntaxWalker
 {
-    private event Action<MemberAccessExpressionSyntax>? OnUsageFound;
+    private List<MemberAccessExpressionSyntax> Usages { get; } = new();
 
     public IEnumerable<MemberAccessExpressionSyntax> FindUsages(MethodDeclarationSyntax methodDeclaration)
     {
-        var usages = new List<MemberAccessExpressionSyntax>();
-        var usageFound = (MemberAccessExpressionSyntax usage) => usages.Add(usage);
-
-        OnUsageFound += usageFound;
         Visit(methodDeclaration);
-        OnUsageFound -= usageFound;
-
-        return usages;
+        return Usages;
     }
 
     public override void VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
@@ -31,7 +25,7 @@ internal class MemberAccessUsageFinder(List<(string containingType, string membe
                 node.Expression is IdentifierNameSyntax ins &&
                 ins.Identifier.Text == identifier.containingType)
             {
-                OnUsageFound?.Invoke(node);
+                Usages.Add(node);
             }
         }
 

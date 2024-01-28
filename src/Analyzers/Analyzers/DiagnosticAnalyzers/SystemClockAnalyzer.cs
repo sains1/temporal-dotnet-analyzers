@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 
 using Analyzers.SyntaxWalkers;
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -16,8 +13,9 @@ namespace Analyzers.DiagnosticAnalyzers;
 /// An analyzer that reports usage of SystemClock in workflows
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-internal class SystemClockAnalyzer : DiagnosticAnalyzer
+internal class SystemClockAnalyzer : BaseAnalyzer
 {
+    #region diagnostic constants
     public const string DiagnosticId = "TMPRL0002";
     private const string Category = "Non-Determinism";
 
@@ -29,52 +27,22 @@ internal class SystemClockAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Rule);
+    #endregion
 
-    public override void Initialize(AnalysisContext context)
-    {
-        // avoid analyzing generated code.
-        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-
-        context.EnableConcurrentExecution();
-
-        context.RegisterSyntaxNodeAction(AnalyzeSyntax, SyntaxKind.ClassDeclaration);
-    }
-
-    private static new readonly List<(string memberIdentifier, string containingType)> ClockIdentifiers =
-    [
+    private static readonly MemberAccessUsageFinder MemberAccessUsageFinder = new([
         (nameof(DateTime), nameof(DateTime.Now)),
         (nameof(DateTime), nameof(DateTime.UtcNow)),
         (nameof(DateTimeOffset), nameof(DateTimeOffset.Now)),
         (nameof(DateTimeOffset), nameof(DateTimeOffset.UtcNow))
-    ];
+    ]);
 
-    private static readonly MemberAccessUsageFinder MemberAccessUsageFinder = new(ClockIdentifiers);
-
-    private void AnalyzeSyntax(SyntaxNodeAnalysisContext context)
+    protected override void AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
     {
-        if (context.Node is not ClassDeclarationSyntax classDeclarationNode)
-            return;
-
-        // filter out classes not decorated with [Workflow]
-        if (!DeclarationSyntaxFilters.HasAttribute(classDeclarationNode, context.SemanticModel,
-                TemporalConstants.WorkflowAttribute))
-            return;
-
-        // find all of the methods on the class with [WorkflowRun]
-        var runMethods = classDeclarationNode
-            .DescendantNodes().OfType<MethodDeclarationSyntax>()
-            .Where(x => DeclarationSyntaxFilters.HasAttribute(x, context.SemanticModel,
-                TemporalConstants.WorkflowRunAttribute));
-
-        foreach (var method in runMethods)
+        var usages = MemberAccessUsageFinder.FindUsages(method);
+        foreach (var usage in usages)
         {
-            // find all usages of system clocks within the method
-            var usages = MemberAccessUsageFinder.FindUsages(method);
-            foreach (var usage in usages)
-            {
-                var diagnostic = Diagnostic.Create(Rule, usage.GetLocation(), usage.ToString());
-                context.ReportDiagnostic(diagnostic);
-            }
+            var diagnostic = Diagnostic.Create(Rule, usage.GetLocation(), usage.ToString());
+            context.ReportDiagnostic(diagnostic);
         }
     }
 }
