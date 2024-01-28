@@ -20,10 +20,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Analyzers\Analyzers.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
       <Compile Update="Sources\TMPRL0003_GuidNewGuidWorkflow.cs">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Compile>
@@ -45,6 +41,10 @@
       <Compile Update="Sources\TMPRL0002_DateTimeUtcNowWorkflow.cs">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\Analyzers\Analyzers\Analyzers.csproj" />
     </ItemGroup>
 
 </Project>
