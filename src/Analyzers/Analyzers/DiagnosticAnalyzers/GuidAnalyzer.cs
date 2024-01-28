@@ -41,11 +41,7 @@ internal class GuidAnalyzer : ITemporalRunAnalyzer
 
     void ITemporalRunAnalyzer.AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
     {
-        Finder.Visit(method);
-
-        foreach (var usage in Finder.FindUsages(method))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(Descriptor, usage.GetLocation(), usage.ToString()));
-        }
+        Finder.FindUsages(method,
+            usage => context.ReportDiagnostic(Diagnostic.Create(Descriptor, usage.GetLocation(), usage.ToString())));
     }
 }

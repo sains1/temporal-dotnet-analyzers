@@ -43,11 +43,7 @@ internal class WorkflowTimerAnalyzer : ITemporalRunAnalyzer
 
     public void AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
     {
-        var usages = Finder.FindUsages(method);
-        foreach (var usage in usages)
-        {
-            var diagnostic = Diagnostic.Create(Descriptor, usage.GetLocation(), usage.ToString());
-            context.ReportDiagnostic(diagnostic);
-        }
+        Finder.FindUsages(method,
+            usage => context.ReportDiagnostic(Diagnostic.Create(Descriptor, usage.GetLocation(), usage.ToString())));
     }
 }

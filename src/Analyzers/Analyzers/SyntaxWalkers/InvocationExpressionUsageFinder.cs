@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 using Microsoft.CodeAnalysis.CSharp;
@@ -8,12 +9,17 @@ namespace Analyzers.SyntaxWalkers;
 internal class InvocationExpressionUsageFinder(Dictionary<string, string> memberIdentifiers)
     : CSharpSyntaxWalker
 {
-    private List<InvocationExpressionSyntax> Usages { get; } = new();
+    private readonly object _lockObject = new();
+    private Action<InvocationExpressionSyntax>? _onUsageFound;
 
-    public IEnumerable<InvocationExpressionSyntax> FindUsages(MethodDeclarationSyntax methodDeclaration)
+    public void FindUsages(MethodDeclarationSyntax methodDeclaration, Action<InvocationExpressionSyntax> onUsageFound)
     {
-        Visit(methodDeclaration);
-        return Usages;
+        lock (_lockObject)
+        {
+            _onUsageFound = onUsageFound;
+            Visit(methodDeclaration);
+            _onUsageFound = null;
+        }
     }
 
     public override void VisitInvocationExpression(InvocationExpressionSyntax node)
@@ -23,7 +29,7 @@ internal class InvocationExpressionUsageFinder(Dictionary<string, string> member
             && ma.Expression is IdentifierNameSyntax ins
             && ins.Identifier.Text == memberIdentifiers[ma.Name.Identifier.Text])
         {
-            Usages.Add(node);
+            _onUsageFound?.Invoke(node);
         }
 
         base.VisitInvocationExpression(node);

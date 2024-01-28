@@ -33,7 +33,7 @@ internal class SystemClockAnalyzer : ITemporalRunAnalyzer
 
     #endregion
 
-    private static readonly MemberAccessUsageFinder MemberAccessUsageFinder = new([
+    private static readonly MemberAccessUsageFinder ClockUsageFinder = new([
         (nameof(DateTime), nameof(DateTime.Now)),
         (nameof(DateTime), nameof(DateTime.UtcNow)),
         (nameof(DateTimeOffset), nameof(DateTimeOffset.Now)),
@@ -42,11 +42,7 @@ internal class SystemClockAnalyzer : ITemporalRunAnalyzer
 
     public void AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
     {
-        var usages = MemberAccessUsageFinder.FindUsages(method);
-        foreach (var usage in usages)
-        {
-            var diagnostic = Diagnostic.Create(Descriptor, usage.GetLocation(), usage.ToString());
-            context.ReportDiagnostic(diagnostic);
-        }
+        ClockUsageFinder.FindUsages(method,
+            usage => context.ReportDiagnostic(Diagnostic.Create(Descriptor, usage.GetLocation(), usage.ToString())));
     }
 }
