@@ -27,7 +27,7 @@ public class RootAnalyzer : DiagnosticAnalyzer
 
     private readonly List<ITemporalRunAnalyzer> _workflowRunAnalyzers =
         [GuidAnalyzer, SystemClockAnalyzer, WorkflowTimerAnalyzer];
-    
+
     private readonly List<ITemporalRunAnalyzer> _workflowQueryAnalyzers =
         [WorkflowQueryReturnTypeAnalyzer];
 
@@ -61,7 +61,7 @@ public class RootAnalyzer : DiagnosticAnalyzer
         var runMethods = classDeclarationNode
             .DescendantNodes().OfType<MethodDeclarationSyntax>()
             .Where(x => HasAttribute(x, context.SemanticModel, TemporalConstants.WorkflowRunAttribute));
-        
+
         // find all of the methods on the class with WorkflowQueryAttribute
         var queryMethods = classDeclarationNode
             .DescendantNodes().OfType<MethodDeclarationSyntax>()
@@ -74,7 +74,7 @@ public class RootAnalyzer : DiagnosticAnalyzer
                 analyzer.AnalyzeWorkflowRunMethod(context, method);
             });
         }
-        
+
         foreach (var method in queryMethods)
         {
             Parallel.ForEach(_workflowQueryAnalyzers, analyzer =>

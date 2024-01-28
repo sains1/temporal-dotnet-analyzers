@@ -28,12 +28,12 @@ public class BadWorkflow
 
         return result;
     }
-    
+
     [WorkflowQuery]
     public void QueryVoid()
     {
     }
-    
+
     [WorkflowQuery]
     public Task QueryTask()
     {

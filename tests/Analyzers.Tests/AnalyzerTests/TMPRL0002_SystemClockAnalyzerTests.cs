@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 
 using Analyzers.DiagnosticAnalyzers;
+using Analyzers.DiagnosticAnalyzers.WorkflowRunAnalyzers;
 
 using Xunit;
 
