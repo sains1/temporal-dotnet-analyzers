@@ -26,9 +26,10 @@ public class RootAnalyzer : DiagnosticAnalyzer
     private static readonly WorkflowTimerAnalyzer WorkflowTimerAnalyzer = new();
     private static readonly WorkflowQueryReturnTypeAnalyzer WorkflowQueryReturnTypeAnalyzer = new();
     private static readonly WorkflowSignalReturnTypeAnalyzer WorkflowSignalReturnTypeAnalyzer = new();
+    private static readonly ConfigureAwaitFalseAnalyzer ConfigureAwaitFalseAnalyzer = new();
 
     private readonly List<ITemporalRunAnalyzer> _workflowRunAnalyzers =
-        [GuidAnalyzer, SystemClockAnalyzer, WorkflowTimerAnalyzer];
+        [GuidAnalyzer, SystemClockAnalyzer, WorkflowTimerAnalyzer, ConfigureAwaitFalseAnalyzer];
 
     private readonly List<ITemporalRunAnalyzer> _workflowQueryAnalyzers =
         [WorkflowQueryReturnTypeAnalyzer];

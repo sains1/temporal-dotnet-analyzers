@@ -59,6 +59,9 @@
       <Compile Update="Sources\TMPRL0005_TaskTReturnSignal.cs">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Compile>
+      <Compile Update="Sources\TMPRL0006_ConfigureAwaitFalseWorkflow.cs">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

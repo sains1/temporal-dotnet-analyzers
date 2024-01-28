@@ -15,6 +15,8 @@ public class BadWorkflow
         var result = await Workflow.ExecuteActivityAsync((SampleActivities act) => act.SayHello(name),
             new ActivityOptions { StartToCloseTimeout = TimeSpan.FromSeconds(1) });
 
+        await Task.CompletedTask.ConfigureAwait(false);
+
         await Task.Delay(100);
 
         Thread.Sleep(1000);
