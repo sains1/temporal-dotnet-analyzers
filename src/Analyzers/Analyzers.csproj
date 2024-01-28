@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <IsPackable>true</IsPackable>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
 
@@ -10,11 +11,11 @@
         <IsRoslynComponent>true</IsRoslynComponent>
 
         <RootNamespace>Analyzers</RootNamespace>
-        <AssemblyName>Analyzers</AssemblyName>
+        <AssemblyName>sains1.Temporalio.RosylnAnalyzers</AssemblyName>
 
         <EnablePackageValidation>true</EnablePackageValidation>
         <PackageId>sains1.Temporalio.RosylnAnalyzers</PackageId>
-        <PackageVersion>0.1.0</PackageVersion>
+        <PackageVersion>0.1.1</PackageVersion>
         <PackageTags>codeanalysis, roslyn</PackageTags>
         <Description>Temporalio workflow roslyn analyzers</Description>
         <RepositoryUrl>https://github.com/sains1/temporal-dotnet-analyzers</RepositoryUrl>
@@ -30,18 +31,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Update="Resources.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-        </EmbeddedResource>
+        <None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="" />
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
-
-    <ItemGroup>
-        <Compile Update="Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-        </Compile>
-    </ItemGroup>
-
 </Project>

@@ -32,8 +32,8 @@ jobs:
       - name: install dotnet
         uses: actions/setup-dotnet@v4
 
-      - name: dotnet pack
-        run: dotnet pack ${{ env.TargetProject }} --configuration Release --output ${{ env.NuGetDirectory }}
+      - name: dotnet build
+        run: dotnet build ${{ env.TargetProject }} --configuration Release --output ${{ env.NuGetDirectory }}
 
       - name: store artifact
         uses: actions/upload-artifact@v3
