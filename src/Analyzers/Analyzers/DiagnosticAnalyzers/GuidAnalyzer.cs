@@ -12,7 +12,7 @@ namespace Analyzers.DiagnosticAnalyzers;
 /// <summary>
 /// An analyzer that reports usage of Guid generation in workflows
 /// </summary>
-internal class GuidAnalyzer : ITemporalRunAnalyzer
+public class GuidAnalyzer : ITemporalRunAnalyzer
 {
     # region diagnostic constants
     private struct RuleConstants
@@ -26,7 +26,7 @@ internal class GuidAnalyzer : ITemporalRunAnalyzer
         public const bool IsEnabledByDefault = true;
     }
 
-    private static readonly DiagnosticDescriptor Descriptor = new(RuleConstants.DiagnosticId, RuleConstants.Title,
+    public static readonly DiagnosticDescriptor Descriptor = new(RuleConstants.DiagnosticId, RuleConstants.Title,
         RuleConstants.MessageFormat, RuleConstants.Category, RuleConstants.Severity, RuleConstants.IsEnabledByDefault,
         RuleConstants.Description);
 

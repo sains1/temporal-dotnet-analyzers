@@ -13,7 +13,7 @@ namespace Analyzers.DiagnosticAnalyzers;
 /// <summary>
 /// An analyzer that reports any usage of .NET Timers in workflows
 /// </summary>
-internal class WorkflowTimerAnalyzer : ITemporalRunAnalyzer
+public class WorkflowTimerAnalyzer : ITemporalRunAnalyzer
 {
     # region diagnostic constants
     private struct RuleConstants
@@ -27,7 +27,7 @@ internal class WorkflowTimerAnalyzer : ITemporalRunAnalyzer
         public const bool IsEnabledByDefault = true;
     }
 
-    private static readonly DiagnosticDescriptor Descriptor = new(RuleConstants.DiagnosticId, RuleConstants.Title,
+    public static readonly DiagnosticDescriptor Descriptor = new(RuleConstants.DiagnosticId, RuleConstants.Title,
         RuleConstants.MessageFormat, RuleConstants.Category, RuleConstants.Severity, RuleConstants.IsEnabledByDefault,
         RuleConstants.Description);
 
