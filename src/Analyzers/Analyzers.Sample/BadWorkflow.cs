@@ -45,6 +45,23 @@ public class BadWorkflow
     {
         return Task.FromResult("hello");
     }
+
+    [WorkflowSignal]
+    public void SignalVoid()
+    {
+    }
+
+    [WorkflowSignal]
+    public Task<string> SignalTaskT()
+    {
+        return Task.FromResult("hello");
+    }
+
+    [WorkflowSignal]
+    public string SignalString()
+    {
+        return "hello";
+    }
 }
 
 public class SampleActivities

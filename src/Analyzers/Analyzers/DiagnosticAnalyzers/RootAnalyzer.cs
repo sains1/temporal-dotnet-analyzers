@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 using Analyzers.DiagnosticAnalyzers.WorkflowQueryAnalyzers;
 using Analyzers.DiagnosticAnalyzers.WorkflowRunAnalyzers;
+using Analyzers.DiagnosticAnalyzers.WorkflowSignalAnalyzers;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -24,6 +25,7 @@ public class RootAnalyzer : DiagnosticAnalyzer
     private static readonly SystemClockAnalyzer SystemClockAnalyzer = new();
     private static readonly WorkflowTimerAnalyzer WorkflowTimerAnalyzer = new();
     private static readonly WorkflowQueryReturnTypeAnalyzer WorkflowQueryReturnTypeAnalyzer = new();
+    private static readonly WorkflowSignalReturnTypeAnalyzer WorkflowSignalReturnTypeAnalyzer = new();
 
     private readonly List<ITemporalRunAnalyzer> _workflowRunAnalyzers =
         [GuidAnalyzer, SystemClockAnalyzer, WorkflowTimerAnalyzer];
@@ -31,9 +33,14 @@ public class RootAnalyzer : DiagnosticAnalyzer
     private readonly List<ITemporalRunAnalyzer> _workflowQueryAnalyzers =
         [WorkflowQueryReturnTypeAnalyzer];
 
+    private readonly List<ITemporalRunAnalyzer> _workflowSignalAnalyzers =
+        [WorkflowSignalReturnTypeAnalyzer];
+
     private ImmutableArray<DiagnosticDescriptor> Diagnostics =>
         _workflowRunAnalyzers.Select(x => x.DiagnosticDescriptor)
-            .Concat(_workflowQueryAnalyzers.Select(x => x.DiagnosticDescriptor)).ToImmutableArray();
+            .Concat(_workflowQueryAnalyzers.Select(x => x.DiagnosticDescriptor))
+            .Concat(_workflowSignalAnalyzers.Select(x => x.DiagnosticDescriptor))
+            .ToImmutableArray();
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => Diagnostics;
 
@@ -67,6 +74,11 @@ public class RootAnalyzer : DiagnosticAnalyzer
             .DescendantNodes().OfType<MethodDeclarationSyntax>()
             .Where(x => HasAttribute(x, context.SemanticModel, TemporalConstants.WorkflowQueryAttribute));
 
+        // find all of the methods on the class with WorkflowSignalAttribute
+        var signalMethods = classDeclarationNode
+            .DescendantNodes().OfType<MethodDeclarationSyntax>()
+            .Where(x => HasAttribute(x, context.SemanticModel, TemporalConstants.WorkflowSignalAttribute));
+
         foreach (var method in runMethods)
         {
             Parallel.ForEach(_workflowRunAnalyzers, analyzer =>
@@ -78,6 +90,14 @@ public class RootAnalyzer : DiagnosticAnalyzer
         foreach (var method in queryMethods)
         {
             Parallel.ForEach(_workflowQueryAnalyzers, analyzer =>
+            {
+                analyzer.AnalyzeWorkflowRunMethod(context, method);
+            });
+        }
+
+        foreach (var method in signalMethods)
+        {
+            Parallel.ForEach(_workflowSignalAnalyzers, analyzer =>
             {
                 analyzer.AnalyzeWorkflowRunMethod(context, method);
             });
