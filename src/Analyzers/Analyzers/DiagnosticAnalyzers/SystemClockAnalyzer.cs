@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Immutable;
 
 using Analyzers.SyntaxWalkers;
 
@@ -12,21 +11,26 @@ namespace Analyzers.DiagnosticAnalyzers;
 /// <summary>
 /// An analyzer that reports usage of SystemClock in workflows
 /// </summary>
-[DiagnosticAnalyzer(LanguageNames.CSharp)]
-internal class SystemClockAnalyzer : BaseAnalyzer
+internal class SystemClockAnalyzer : ITemporalRunAnalyzer
 {
-    #region diagnostic constants
-    public const string DiagnosticId = "TMPRL0002";
-    private const string Category = "Non-Determinism";
+    # region diagnostic constants
+    private struct RuleConstants
+    {
+        public const string DiagnosticId = "TMPRL0002";
+        public const string Title = "Workflow contains use of System Clock";
+        public const string MessageFormat = "Workflow contains use of System Clock: '{0}'";
+        public const string Description = "Workflows should not contain usages of System Clock.";
+        public const string Category = "TemporalWorkflow";
+        public const DiagnosticSeverity Severity = DiagnosticSeverity.Warning;
+        public const bool IsEnabledByDefault = true;
+    }
 
-    private static readonly LocalizableString Title = "Workflow contains use of System Clock";
-    private static readonly LocalizableString MessageFormat = "Workflow contains use of System Clock: '{0}'";
-    private static readonly LocalizableString Description = "Workflows should not contain usages of System Clock.";
+    private static readonly DiagnosticDescriptor Descriptor = new(RuleConstants.DiagnosticId, RuleConstants.Title,
+        RuleConstants.MessageFormat, RuleConstants.Category, RuleConstants.Severity, RuleConstants.IsEnabledByDefault,
+        RuleConstants.Description);
 
-    private static readonly DiagnosticDescriptor Rule = new(DiagnosticId, Title, MessageFormat, Category,
-        DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
+    public DiagnosticDescriptor DiagnosticDescriptor => Descriptor;
 
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Rule);
     #endregion
 
     private static readonly MemberAccessUsageFinder MemberAccessUsageFinder = new([
@@ -36,12 +40,12 @@ internal class SystemClockAnalyzer : BaseAnalyzer
         (nameof(DateTimeOffset), nameof(DateTimeOffset.UtcNow))
     ]);
 
-    protected override void AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
+    public void AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
     {
         var usages = MemberAccessUsageFinder.FindUsages(method);
         foreach (var usage in usages)
         {
-            var diagnostic = Diagnostic.Create(Rule, usage.GetLocation(), usage.ToString());
+            var diagnostic = Diagnostic.Create(Descriptor, usage.GetLocation(), usage.ToString());
             context.ReportDiagnostic(diagnostic);
         }
     }

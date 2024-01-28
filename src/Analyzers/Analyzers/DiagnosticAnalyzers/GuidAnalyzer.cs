@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 
 using Analyzers.SyntaxWalkers;
 
@@ -13,21 +12,26 @@ namespace Analyzers.DiagnosticAnalyzers;
 /// <summary>
 /// An analyzer that reports usage of Guid generation in workflows
 /// </summary>
-[DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class GuidAnalyzer : BaseAnalyzer
+internal class GuidAnalyzer : ITemporalRunAnalyzer
 {
-    #region diagnostic constants
-    public const string DiagnosticId = "TMPRL0003";
-    private const string Category = "Non-Determinism";
+    # region diagnostic constants
+    private struct RuleConstants
+    {
+        public const string DiagnosticId = "TMPRL0003";
+        public const string Title = "Workflow contains use of Guid generator";
+        public const string MessageFormat = "Workflow contains use of Guid generator: '{0}'";
+        public const string Description = "Workflows should not contain usages of Guid generator.";
+        public const string Category = "TemporalWorkflow";
+        public const DiagnosticSeverity Severity = DiagnosticSeverity.Warning;
+        public const bool IsEnabledByDefault = true;
+    }
 
-    private static readonly LocalizableString Title = "Workflow contains use of Guid generator";
-    private static readonly LocalizableString MessageFormat = "Workflow contains use of Guid generator: '{0}'";
-    private static readonly LocalizableString Description = "Workflows should not contain usages of Guid generator.";
+    private static readonly DiagnosticDescriptor Descriptor = new(RuleConstants.DiagnosticId, RuleConstants.Title,
+        RuleConstants.MessageFormat, RuleConstants.Category, RuleConstants.Severity, RuleConstants.IsEnabledByDefault,
+        RuleConstants.Description);
 
-    private static readonly DiagnosticDescriptor Rule = new(DiagnosticId, Title, MessageFormat, Category,
-        DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
+    public DiagnosticDescriptor DiagnosticDescriptor => Descriptor;
 
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Rule);
     #endregion
 
     private static readonly InvocationExpressionUsageFinder Finder = new(new Dictionary<string, string>
@@ -35,13 +39,13 @@ public class GuidAnalyzer : BaseAnalyzer
         [nameof(Guid.NewGuid)] = nameof(Guid)
     });
 
-    protected override void AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
+    void ITemporalRunAnalyzer.AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
     {
         Finder.Visit(method);
 
         foreach (var usage in Finder.FindUsages(method))
         {
-            context.ReportDiagnostic(Diagnostic.Create(Rule, usage.GetLocation(), usage.ToString()));
+            context.ReportDiagnostic(Diagnostic.Create(Descriptor, usage.GetLocation(), usage.ToString()));
         }
     }
 }

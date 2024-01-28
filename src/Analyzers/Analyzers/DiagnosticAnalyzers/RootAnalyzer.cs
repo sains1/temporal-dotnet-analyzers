@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 using Microsoft.CodeAnalysis;
@@ -7,8 +9,25 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Analyzers.DiagnosticAnalyzers;
 
-public abstract class BaseAnalyzer : DiagnosticAnalyzer
+/// <summary>
+/// Root analyzer is the entrypoint for the other analyzers. As our analyzers all work on the same WorkflowRun methods
+/// we can prevent the need to do the expensive symbol analysis multiple times
+/// </summary>
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+public class RootAnalyzer : DiagnosticAnalyzer
 {
+    private static readonly GuidAnalyzer GuidAnalyzer = new();
+    private static readonly SystemClockAnalyzer SystemClockAnalyzer = new();
+    private static readonly WorkflowTimerAnalyzer WorkflowTimerAnalyzer = new();
+
+    private readonly List<ITemporalRunAnalyzer> _analyzers =
+        [GuidAnalyzer, SystemClockAnalyzer, WorkflowTimerAnalyzer];
+
+    private ImmutableArray<DiagnosticDescriptor> Diagnostics =>
+        _analyzers.Select(x => x.DiagnosticDescriptor).ToImmutableArray();
+
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => Diagnostics;
+
     public override void Initialize(AnalysisContext context)
     {
         // avoid analyzing generated code.
@@ -24,30 +43,32 @@ public abstract class BaseAnalyzer : DiagnosticAnalyzer
         if (context.Node is not ClassDeclarationSyntax classDeclarationNode)
             return;
 
-        // filter out classes not decorated with [Workflow]
+        // filter out classes not decorated with WorkflowAttribute
         if (!HasAttribute(classDeclarationNode, context.SemanticModel,
                 TemporalConstants.WorkflowAttribute))
             return;
 
-        // find all of the methods on the class with [WorkflowRun]
+        // find all of the methods on the class with WorkflowRunAttribute
         var runMethods = classDeclarationNode
             .DescendantNodes().OfType<MethodDeclarationSyntax>()
             .Where(x => HasAttribute(x, context.SemanticModel, TemporalConstants.WorkflowRunAttribute));
 
+        // TODO can we execute concurrently?
         foreach (var method in runMethods)
         {
-            AnalyzeWorkflowRunMethod(context, method);
+            foreach (var analyzer in _analyzers)
+            {
+                analyzer.AnalyzeWorkflowRunMethod(context, method);
+            }
         }
     }
-
-    protected abstract void AnalyzeWorkflowRunMethod(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method);
 
     private static bool HasAttribute(ClassDeclarationSyntax classDeclaration, SemanticModel semanticModel, string attributeDisplayString)
     {
         var attributeSyntax = classDeclaration.AttributeLists
             .SelectMany(list => list.Attributes)
             .FirstOrDefault(attribute =>
-                semanticModel.GetTypeInfo(attribute).Type?.ToDisplayString() == attributeDisplayString);
+                ModelExtensions.GetTypeInfo(semanticModel, attribute).Type?.ToDisplayString() == attributeDisplayString);
 
         return attributeSyntax != null;
     }
@@ -57,7 +78,7 @@ public abstract class BaseAnalyzer : DiagnosticAnalyzer
         var attributeSyntax = methodDeclaration.AttributeLists
             .SelectMany(list => list.Attributes)
             .FirstOrDefault(attribute =>
-                semanticModel.GetTypeInfo(attribute).Type?.ToDisplayString() == attributeDisplayString);
+                ModelExtensions.GetTypeInfo(semanticModel, attribute).Type?.ToDisplayString() == attributeDisplayString);
 
         return attributeSyntax != null;
     }
