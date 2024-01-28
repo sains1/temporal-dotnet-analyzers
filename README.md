@@ -14,9 +14,23 @@ Available analyzers:
 - Make any random calls
 - Make any not-guaranteed-deterministic calls (e.g. iterating over a dictionary)
 
-Others:
+## TODO
 
-- Single run method?
+- Do not use Task.Run
+  - Use Task.Factory.StartNew or instantiate the Task and run Task.Start on it.
+- Do not use Task.ConfigureAwait(false)
+- Do not use Task.Delay, Task.Wait, timeout-based CancellationTokenSource
+  - Workflow.DelayAsync, Workflow.WaitConditionAsync, or non-timeout-based cancellation token source is suggested
+- Do not use Task.WhenAny
+  - Use Workflow.WhenAnyAsync instead
+- suggested code fixes
+  - delays to use wf delay
+  - guid to use wf new guid
+- workflow constraints
+  - run method on exactly one method
+  - run method returns task or taskT
+  - query methods cannot be async, and must not be void
+  - update method returns task or taskT
 
 Prior Art:
 

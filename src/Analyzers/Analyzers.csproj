@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <IsPackable>false</IsPackable>
+        <IsPackable>true</IsPackable>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
 
@@ -11,6 +11,13 @@
 
         <RootNamespace>Analyzers</RootNamespace>
         <AssemblyName>Analyzers</AssemblyName>
+
+        <EnablePackageValidation>true</EnablePackageValidation>
+        <PackageId>sains1.Temporalio.RosylnAnalyzers</PackageId>
+        <PackageVersion>0.1.0</PackageVersion>
+        <PackageTags>codeanalysis, roslyn</PackageTags>
+        <Description>Temporalio workflow roslyn analyzers</Description>
+        <RepositoryUrl>https://github.com/sains1/temporal-dotnet-analyzers</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
