@@ -65,7 +65,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Analyzers\Analyzers\Analyzers.csproj" />
+      <ProjectReference Include="..\..\src\Analyzers\Analyzers.csproj" />
     </ItemGroup>
 
 </Project>

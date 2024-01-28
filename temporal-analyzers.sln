@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{15655A3B-07E7-49E6-B5F0-AC86AC2CD4C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers", "src\Analyzers\Analyzers\Analyzers.csproj", "{3A6C0817-2A15-46C3-BC15-147C56A4DCAC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers", "src\Analyzers\Analyzers.csproj", "{3A6C0817-2A15-46C3-BC15-147C56A4DCAC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers.Sample", "src\Analyzers\Analyzers.Sample\Analyzers.Sample.csproj", "{397655CA-2E64-4B73-B224-953CB916969F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers.Sample", "src\Analyzers.Sample\Analyzers.Sample.csproj", "{397655CA-2E64-4B73-B224-953CB916969F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{7386A75C-A55E-4574-8550-AA05A04B13DC}"
 	ProjectSection(SolutionItems) = preProject
